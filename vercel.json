@@ -18,7 +18,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://ecommerce-platform.vercel.app"
+          "value": "https://final-project-of-the-tech-pulse-company.vercel.app/"
         },
         {
           "key": "Access-Control-Allow-Credentials",
