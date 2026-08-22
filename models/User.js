@@ -147,24 +147,39 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// IMPORTANT: Use function() NOT arrow function
-userSchema.pre('save', async function(next) {
+// ✅ FIX 1: Remove async and use regular function with next
+userSchema.pre('save', function(next) {
   // Only hash if password is modified
   if (!this.isModified('password')) {
     return next();
   }
   
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const user = this;
+  
+  // Use callbacks instead of async/await for better Mongoose compatibility
+  bcrypt.genSalt(10, function(err, salt) {
+    if (err) {
+      return next(err);
+    }
+    
+    bcrypt.hash(user.password, salt, function(err, hash) {
+      if (err) {
+        return next(err);
+      }
+      user.password = hash;
+      next();
+    });
+  });
 });
 
-userSchema.methods.comparePassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
+// ✅ FIX 2: Use regular function for comparePassword
+userSchema.methods.comparePassword = function(candidatePassword) {
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
+      if (err) return reject(err);
+      resolve(isMatch);
+    });
+  });
 };
 
 const User = mongoose.model('User', userSchema);
